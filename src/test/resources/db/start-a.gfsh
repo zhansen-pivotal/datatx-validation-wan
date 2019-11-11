@@ -1,0 +1,8 @@
+start locator --name=locator1_a --port=10334
+start locator --name=locator2_a --port=10335 --locators=localhost[10334]
+configure pdx --read-serialized=true
+start server --name=server1_a --server-port=0 --locators=localhost[10334]
+start server --name=server2_a --server-port=0 --locators=localhost[10334]
+start server --name=server3_a --server-port=0 --locators=localhost[10334]
+
+create region --name=test --type=PARTITION

@@ -1,0 +1,8 @@
+start locator --name=locator1_b --port=10336 --http-service-port=7575 --J=-Dgemfire.jmx-manager-port=10998
+start locator --name=locator2_b --port=10337 --locators=localhost[10336]
+configure pdx --read-serialized=true
+start server --name=server1_b --server-port=0 --locators=localhost[10336]
+start server --name=server2_b --server-port=0 --locators=localhost[10336]
+start server --name=server3_b --server-port=0 --locators=localhost[10336]
+
+create region --name=test --type=PARTITION
