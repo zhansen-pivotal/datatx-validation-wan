@@ -5,4 +5,8 @@ start server --name=server1_b --server-port=0 --locators=localhost[10336]
 start server --name=server2_b --server-port=0 --locators=localhost[10336]
 start server --name=server3_b --server-port=0 --locators=localhost[10336]
 
-create region --name=test --type=PARTITION
+create region --name=dog --type=PARTITION
+create region --name=cat --type=PARTITION
+
+put --key="1" --value="1" --region=/dog
+put --key="1" --value="1" --region=/cat
