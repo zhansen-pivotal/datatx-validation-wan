@@ -7,6 +7,7 @@ start server --name=server3_a --server-port=0 --locators=localhost[10334]
 
 create region --name=dog --type=PARTITION
 create region --name=cat --type=PARTITION
+create region --name=customer --type=PARTITION
 
 put --key="1" --value="1" --region=/dog
 put --key="1" --value="1" --region=/cat
