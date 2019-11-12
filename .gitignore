@@ -31,5 +31,5 @@ build/
 .vscode/
 
 ### GemFire ###
-**/src/test/**/locator*
-**/src/test/**/server*
+**/db/locator*
+**/db/server*
