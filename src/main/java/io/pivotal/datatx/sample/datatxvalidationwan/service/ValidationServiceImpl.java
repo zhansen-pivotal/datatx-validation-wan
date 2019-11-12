@@ -21,45 +21,6 @@ public class ValidationServiceImpl implements ValidationService {
   @Autowired
   CacheService cacheService;
 
-  @Override //TODO should probably replace business logic with function for scalable solution
-  public void checkDataMatchers(ClientCache clientCache, Pool site1, Pool site2, Region<String, ValidationSummary> validationSummaryRegion, String region) throws NameResolutionException, TypeMismatchException, QueryInvocationTargetException, FunctionDomainException {
-    ValidationSummary validationSummary = validationSummaryRegion.get(region);
-    if (validationSummary == null) {
-      validationSummary = new ValidationSummary().builder().regionName(region).build();
-    }
-
-    List<Boolean> checks = new ArrayList<>();
-    Region site2Region = cacheService.createRegion(clientCache, site2, region);
-
-    //Had to do it this way otherwise region.get() was not respecting pool.
-    SelectResults<Struct> site1Entries = (SelectResults<Struct>) clientCache
-            .getQueryService(site1.getName())
-            .newQuery("Select e.key, e.value from /" + region + ".entrySet e")
-            .execute();
-
-    site1Entries.forEach(e -> {
-      Object key = e.get("key");
-      Object site1result = e.get("value");
-      Object site2result = site2Region.get(key);
-      if (!site1result.equals(site2result)) {
-        checks.add(false);
-      } else {
-        checks.add(true);
-      }
-    });
-
-    if (checks.contains(false)) {
-      log.error("checkDataMatchers: dataMatcher not equal region[{}]", region);
-      validationSummary.setDataMatcher(false);
-    } else {
-      log.info("checkDataMatchers: Validated dataMatcher region[{}]", region);
-      validationSummary.setDataMatcher(true);
-    }
-
-    validationSummaryRegion.put(region, validationSummary);
-    cacheService.destroyRegion(clientCache, site2Region);
-  }
-
   @Override
   public void reviewValidationStep(@Qualifier("validationSummary") Region<String,
           ValidationSummary> validationSummaryRegion) {
@@ -143,6 +104,45 @@ public class ValidationServiceImpl implements ValidationService {
       log.info("checkKeyMatchers: Validated keyMatchers region[{}]", region);
       validationSummary.setKeyMatcher(true);
     }
+    validationSummaryRegion.put(region, validationSummary);
+    cacheService.destroyRegion(clientCache, site2Region);
+  }
+
+  @Override //TODO should probably replace business logic with function for scalable solution
+  public void checkDataMatchers(ClientCache clientCache, Pool site1, Pool site2, Region<String, ValidationSummary> validationSummaryRegion, String region) throws NameResolutionException, TypeMismatchException, QueryInvocationTargetException, FunctionDomainException {
+    ValidationSummary validationSummary = validationSummaryRegion.get(region);
+    if (validationSummary == null) {
+      validationSummary = new ValidationSummary().builder().regionName(region).build();
+    }
+
+    List<Boolean> checks = new ArrayList<>();
+    Region site2Region = cacheService.createRegion(clientCache, site2, region);
+
+    //Had to do it this way otherwise region.get() was not respecting pool.
+    SelectResults<Struct> site1Entries = (SelectResults<Struct>) clientCache
+            .getQueryService(site1.getName())
+            .newQuery("Select e.key, e.value from /" + region + ".entrySet e")
+            .execute();
+
+    site1Entries.forEach(e -> {
+      Object key = e.get("key");
+      Object site1result = e.get("value");
+      Object site2result = site2Region.get(key);
+      if (!site1result.equals(site2result)) {
+        checks.add(false);
+      } else {
+        checks.add(true);
+      }
+    });
+
+    if (checks.contains(false)) {
+      log.error("checkDataMatchers: dataMatcher not equal region[{}]", region);
+      validationSummary.setDataMatcher(false);
+    } else {
+      log.info("checkDataMatchers: Validated dataMatcher region[{}]", region);
+      validationSummary.setDataMatcher(true);
+    }
+
     validationSummaryRegion.put(region, validationSummary);
     cacheService.destroyRegion(clientCache, site2Region);
   }

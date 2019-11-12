@@ -15,6 +15,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import org.springframework.data.gemfire.client.ClientRegionFactoryBean;
 import org.springframework.data.gemfire.config.annotation.EnablePdx;
 import org.springframework.data.gemfire.config.annotation.EnablePool;
@@ -35,9 +36,15 @@ import java.util.List;
 @EnableClusterAware
 public class DatatxValidationWanApplication {
 
-  public List<String> setTestRegionNames() {
-    testRegionNames.add("cat");
-    testRegionNames.add("dog");
+  public static final String WAN_REGION_PROP = "gemfire.wan.regions";
+
+  @Bean("regions")
+  public List<String> setRegionNames(Environment environment) {
+    String regions = environment.getProperty(WAN_REGION_PROP);
+    String[] r = regions.split(",");
+    for (String region : r) {
+      testRegionNames.add(region);
+    }
     return testRegionNames;
   }
 
@@ -55,15 +62,17 @@ public class DatatxValidationWanApplication {
 
 
   @Bean
-  ApplicationRunner runner(ClientCache clientCache, @Qualifier("site1") Pool site1, @Qualifier(
-          "site2") Pool site2,
+  ApplicationRunner runner(@Qualifier("regions") List<String> regions, ClientCache clientCache,
+                           @Qualifier("site1") Pool site1,
+                           @Qualifier(
+                                   "site2") Pool site2,
                            @Qualifier("validationSummary") Region<String, ValidationSummary> validationSummaryRegion) {
     return args -> {
-      for (String region : setTestRegionNames()) {
+      for (String region : regions) {
         validationService.checkEntrySize(clientCache, site1, site2, validationSummaryRegion,
                 region);
         validationService.checkKeyMatchers(clientCache, site1, site2, validationSummaryRegion, region);
-        validationService.checkDataMatchers(clientCache, site1, site2, validationSummaryRegion,region);
+        validationService.checkDataMatchers(clientCache, site1, site2, validationSummaryRegion, region);
       }
       validationService.reviewValidationStep(validationSummaryRegion);
     };
