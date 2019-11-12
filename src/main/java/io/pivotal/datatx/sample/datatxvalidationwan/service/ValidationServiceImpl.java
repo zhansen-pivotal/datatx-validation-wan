@@ -30,6 +30,8 @@ public class ValidationServiceImpl implements ValidationService {
 
     List<Boolean> checks = new ArrayList<>();
     Region site2Region = cacheService.createRegion(clientCache, site2, region);
+
+    //Had to do it this way otherwise region.get() was not respecting pool.
     SelectResults<Struct> site1Entries = (SelectResults<Struct>) clientCache
             .getQueryService(site1.getName())
             .newQuery("Select e.key, e.value from /" + region + ".entrySet e")
@@ -39,8 +41,6 @@ public class ValidationServiceImpl implements ValidationService {
       Object key = e.get("key");
       Object site1result = e.get("value");
       Object site2result = site2Region.get(key);
-      log.debug("From site 1 [{},{}]", key, site1result);
-      log.debug("From site 2 [{},{}]", key, site2result);
       if (!site1result.equals(site2result)) {
         checks.add(false);
       } else {
