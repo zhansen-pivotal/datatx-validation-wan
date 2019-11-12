@@ -3,7 +3,6 @@ package io.pivotal.datatx.sample.datatxvalidationwan;
 import io.pivotal.datatx.sample.datatxvalidationwan.model.ValidationSummary;
 import io.pivotal.datatx.sample.datatxvalidationwan.service.LoadService;
 import io.pivotal.datatx.sample.datatxvalidationwan.service.ValidationService;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.geode.cache.GemFireCache;
 import org.apache.geode.cache.Region;
 import org.apache.geode.cache.client.ClientCache;
@@ -26,8 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SpringBootApplication
-@Slf4j
-@EnablePdx
+@EnablePdx //TODO probably want to use read-serialized=true as this likely won't have pojo objects
 @EnablePools(
         pools = {
                 @EnablePool(name = "site1"),
