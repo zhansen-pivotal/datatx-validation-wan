@@ -11,4 +11,5 @@ public class ValidationSummary {
   String regionName;
   boolean entryCount;
   boolean keyMatcher;
+  boolean dataMatcher;
 }

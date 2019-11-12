@@ -10,3 +10,4 @@ create region --name=cat --type=PARTITION
 
 put --key="1" --value="1" --region=/dog
 put --key="1" --value="1" --region=/cat
+put --key="2" --value="2" --region=/cat

@@ -63,6 +63,7 @@ public class DatatxValidationWanApplication {
         validationService.checkEntrySize(clientCache, site1, site2, validationSummaryRegion,
                 region);
         validationService.checkKeyMatchers(clientCache, site1, site2, validationSummaryRegion, region);
+        validationService.checkDataMatchers(clientCache, site1, site2, validationSummaryRegion,region);
       }
       validationService.reviewValidationStep(validationSummaryRegion);
     };
@@ -78,6 +79,4 @@ public class DatatxValidationWanApplication {
     validationSummaryRegion.setClose(false);
     return validationSummaryRegion;
   }
-
-
 }
