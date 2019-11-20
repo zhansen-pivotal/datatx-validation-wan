@@ -1,6 +1,7 @@
 package io.pivotal.datatx.sample.datatxvalidationwan;
 
 import io.pivotal.datatx.sample.datatxvalidationwan.model.ValidationSummary;
+import io.pivotal.datatx.sample.datatxvalidationwan.service.FunctionService;
 import io.pivotal.datatx.sample.datatxvalidationwan.service.LoadService;
 import io.pivotal.datatx.sample.datatxvalidationwan.service.ValidationService;
 import org.apache.geode.cache.GemFireCache;
@@ -24,19 +25,19 @@ import org.springframework.geode.config.annotation.EnableClusterAware;
 import java.util.ArrayList;
 import java.util.List;
 
-@SpringBootApplication
-@EnablePdx //TODO probably want to use read-serialized=true as this likely won't have pojo objects
 @EnablePools(
         pools = {
                 @EnablePool(name = "site1"),
                 @EnablePool(name = "site2")
         })
+@EnablePdx(readSerialized = true)
 @EnableClusterAware
+@SpringBootApplication
 public class DatatxValidationWanApplication {
 
   public static final String WAN_REGION_PROP = "gemfire.wan.regions";
 
-  private List<String> testRegionNames = new ArrayList<>(); //TODO remove after test
+  private List<String> regionNames = new ArrayList<>(); //TODO remove after test
 
   public static void main(String[] args) {
     SpringApplication.run(DatatxValidationWanApplication.class, args);
@@ -64,18 +65,24 @@ public class DatatxValidationWanApplication {
   @Profile("loadSite1")
   ApplicationRunner runnerLoad1(ClientCache clientCache, @Qualifier("site1") Pool site1,
                                 LoadService loadService) {
-    return args -> {
-      loadService.loadCustomerData(clientCache, site1);
-    };
+    return args -> loadService.loadCustomerData(clientCache, site1);
   }
 
   @Bean
   @Profile("loadSite2")
   ApplicationRunner runnerLoad2(ClientCache clientCache, @Qualifier("site2") Pool site2,
                                 LoadService loadService) {
-    return args -> {
-      loadService.loadCustomerData(clientCache, site2);
-    };
+    return args -> loadService.loadCustomerData(clientCache, site2);
+  }
+
+  @Bean
+  @Profile("function")
+  ApplicationRunner executeFunction(@Qualifier("regions") List<String> regions,
+                                    @Qualifier("site1") Pool site1,
+                                    ClientCache clientCache, FunctionService functionService) {
+    return args -> regions.forEach(r -> {
+      functionService.executeFunction(r, site1, clientCache);
+    });
   }
 
 
@@ -84,9 +91,9 @@ public class DatatxValidationWanApplication {
     String regions = environment.getProperty(WAN_REGION_PROP);
     String[] r = regions.split(",");
     for (String region : r) {
-      testRegionNames.add(region);
+      regionNames.add(region);
     }
-    return testRegionNames;
+    return regionNames;
   }
 
   @Bean("validationSummary")
@@ -99,6 +106,5 @@ public class DatatxValidationWanApplication {
     validationSummaryRegion.setClose(false);
     return validationSummaryRegion;
   }
-
-
 }
+

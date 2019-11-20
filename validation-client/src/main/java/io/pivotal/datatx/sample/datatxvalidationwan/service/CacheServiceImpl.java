@@ -13,7 +13,7 @@ public class CacheServiceImpl implements CacheService {
 
   @Override
   public Region createRegion(ClientCache cache, Pool pool, String name) {
-    log.debug("Creating region test on site[{}]", pool.getName());
+    log.info("Creating region test on site[{}]", pool.getName());
     return cache.createClientRegionFactory(ClientRegionShortcut.PROXY).setPoolName(
             pool.getName()).create(name);
   }
