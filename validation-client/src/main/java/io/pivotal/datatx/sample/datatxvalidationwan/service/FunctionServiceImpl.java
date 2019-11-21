@@ -32,11 +32,13 @@ public class FunctionServiceImpl implements FunctionService {
     if (keys.size() > 0) {
       GemfireOnRegionFunctionTemplate template =
               new GemfireOnRegionFunctionTemplate(region);
+      //TODO: Should probably execute with a filter of keyset
       Iterable<Map<Object, Object>> result = template.execute("GatherDataFunction", keys);
+      //TODO: Handle validation as results come in. Probably need a custom ResultCollector
       result.forEach(q -> {
         if (q != null) {
           log.info("From execute:  FunctionResult: {}", q);
-          counter.getAndIncrement();
+          counter.getAndIncrement(); //TODO: Remove. Only here for testing lastResult logic.
         }
       });
       log.info("Result Set size for region[{}] is [{}]", regionName, counter);

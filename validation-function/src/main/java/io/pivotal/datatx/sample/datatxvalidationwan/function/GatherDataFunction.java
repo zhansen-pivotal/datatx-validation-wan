@@ -52,6 +52,7 @@ public class GatherDataFunction implements Function, Declarable {
         CacheFactory.getAnyInstance().getLogger().info("Using Replicate Region");
       }
 
+      //TODO : Should probably get keyset from filter on function execution.
       keys = executedRegion.keySet();
 
       if (keys.size() == 0 || keys == null) {
@@ -64,6 +65,7 @@ public class GatherDataFunction implements Function, Declarable {
         Object v = executedRegion.get(k);
         if (itr.hasNext()) {
           CacheFactory.getAnyInstance().getLogger().info("Streaming results in 1 object chunks");
+          //TODO: Should probably send a configurable batch size starting with 1000 records
           sender.sendResult(getData(k, v));
         } else {
           CacheFactory.getAnyInstance().getLogger().info("Last result in 1 object chunk");

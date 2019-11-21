@@ -23,12 +23,8 @@
         <dependency>
             <groupId>io.pivotal.gemfire</groupId>
             <artifactId>geode-core</artifactId>
-            <version>9.8.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jgroups</groupId>
-            <artifactId>jgroups</artifactId>
-            <version>3.6.14.Final</version>
+            <version>${gemfire.version}</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
@@ -37,7 +33,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>${maven.compiler.version}</version>
             </plugin>
         </plugins>
     </build>
