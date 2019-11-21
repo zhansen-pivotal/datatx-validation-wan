@@ -1,7 +1,6 @@
 package io.pivotal.datatx.sample.datatxvalidationwan;
 
 import io.pivotal.datatx.sample.datatxvalidationwan.model.ValidationSummary;
-import io.pivotal.datatx.sample.datatxvalidationwan.service.FunctionService;
 import io.pivotal.datatx.sample.datatxvalidationwan.service.LoadService;
 import io.pivotal.datatx.sample.datatxvalidationwan.service.ValidationService;
 import org.apache.geode.cache.GemFireCache;
