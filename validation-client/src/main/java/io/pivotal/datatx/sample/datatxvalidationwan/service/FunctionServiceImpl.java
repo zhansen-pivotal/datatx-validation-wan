@@ -25,7 +25,7 @@ public class FunctionServiceImpl implements FunctionService {
                               @Qualifier("site1") Pool site1,
                               ClientCache clientCache) {
 
-    log.info("Creating Client Region [{}] for function execution", regionName);
+    log.debug("Creating Client Region [{}] for function execution", regionName);
     Region region = cacheService.createRegion(clientCache, site1, regionName);
     Set keys = region.keySetOnServer();
     AtomicInteger counter = new AtomicInteger();

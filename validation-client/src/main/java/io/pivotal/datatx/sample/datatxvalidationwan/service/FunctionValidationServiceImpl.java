@@ -5,9 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.geode.cache.Region;
 import org.apache.geode.cache.client.ClientCache;
 import org.apache.geode.cache.client.Pool;
-import org.apache.geode.cache.query.*;
+import org.apache.geode.cache.query.FunctionDomainException;
+import org.apache.geode.cache.query.NameResolutionException;
+import org.apache.geode.cache.query.QueryInvocationTargetException;
+import org.apache.geode.cache.query.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -16,10 +20,14 @@ import java.util.Set;
 
 @Slf4j
 @Service
-public class ValidationServiceImpl implements ValidationService {
+@Profile("function")
+public class FunctionValidationServiceImpl implements ValidationService {
 
   @Autowired
   CacheService cacheService;
+
+  @Autowired
+  FunctionService functionService;
 
   @Override
   public void reviewValidationStep(@Qualifier("validationSummary") Region<String,
@@ -108,7 +116,7 @@ public class ValidationServiceImpl implements ValidationService {
     cacheService.destroyRegion(clientCache, site2Region);
   }
 
-  @Override //TODO should probably replace business logic with function for scalable solution
+  @Override
   public void checkDataMatchers(ClientCache clientCache, Pool site1, Pool site2, Region<String, ValidationSummary> validationSummaryRegion, String region) throws NameResolutionException, TypeMismatchException, QueryInvocationTargetException, FunctionDomainException {
     ValidationSummary validationSummary = validationSummaryRegion.get(region);
     if (validationSummary == null) {
@@ -116,24 +124,9 @@ public class ValidationServiceImpl implements ValidationService {
     }
 
     List<Boolean> checks = new ArrayList<>();
-    Region site2Region = cacheService.createRegion(clientCache, site2, region);
 
-    //Had to do it this way otherwise region.get() was not respecting pool.
-    SelectResults<Struct> site1Entries = (SelectResults<Struct>) clientCache
-            .getQueryService(site1.getName())
-            .newQuery("Select e.key, e.value from /" + region + ".entrySet e")
-            .execute();
-
-    site1Entries.forEach(e -> {
-      Object key = e.get("key");
-      Object site1result = e.get("value");
-      Object site2result = site2Region.get(key);
-      if (!site1result.equals(site2result)) {
-        checks.add(false);
-      } else {
-        checks.add(true);
-      }
-    });
+    //TODO: Execute FunctionService to gather data from site1 and compare w/ site 2
+    functionService.executeFunction(region, site1, clientCache);
 
     if (checks.contains(false)) {
       log.error("checkDataMatchers: dataMatcher not equal region[{}]", region);
@@ -144,6 +137,5 @@ public class ValidationServiceImpl implements ValidationService {
     }
 
     validationSummaryRegion.put(region, validationSummary);
-    cacheService.destroyRegion(clientCache, site2Region);
   }
 }

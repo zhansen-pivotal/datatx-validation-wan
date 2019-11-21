@@ -44,12 +44,13 @@ public class DatatxValidationWanApplication {
   }
 
   @Bean
-  @Profile("test")
-  ApplicationRunner runner(@Qualifier("regions") List<String> regions, ClientCache clientCache,
-                           @Qualifier("site1") Pool site1,
-                           @Qualifier(
-                                   "site2") Pool site2,
-                           @Qualifier("validationSummary") Region<String, ValidationSummary> validationSummaryRegion, ValidationService validationService) {
+  @Profile({"local", "function"})
+  ApplicationRunner validationRunner(@Qualifier("regions") List<String> regions,
+                                     ClientCache clientCache,
+                                     @Qualifier("site1") Pool site1,
+                                     @Qualifier(
+                                             "site2") Pool site2,
+                                     @Qualifier("validationSummary") Region<String, ValidationSummary> validationSummaryRegion, ValidationService validationService) {
     return args -> {
       for (String region : regions) {
         validationService.checkEntrySize(clientCache, site1, site2, validationSummaryRegion,
@@ -60,6 +61,7 @@ public class DatatxValidationWanApplication {
       validationService.reviewValidationStep(validationSummaryRegion);
     };
   }
+
 
   @Bean
   @Profile("loadSite1")
@@ -74,17 +76,6 @@ public class DatatxValidationWanApplication {
                                 LoadService loadService) {
     return args -> loadService.loadCustomerData(clientCache, site2);
   }
-
-  @Bean
-  @Profile("function")
-  ApplicationRunner executeFunction(@Qualifier("regions") List<String> regions,
-                                    @Qualifier("site1") Pool site1,
-                                    ClientCache clientCache, FunctionService functionService) {
-    return args -> regions.forEach(r -> {
-      functionService.executeFunction(r, site1, clientCache);
-    });
-  }
-
 
   @Bean("regions")
   public List<String> setRegionNames(Environment environment) {
