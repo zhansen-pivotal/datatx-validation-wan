@@ -5,10 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.geode.cache.Region;
 import org.apache.geode.cache.client.ClientCache;
 import org.apache.geode.cache.client.Pool;
-import org.apache.geode.cache.query.FunctionDomainException;
-import org.apache.geode.cache.query.NameResolutionException;
-import org.apache.geode.cache.query.QueryInvocationTargetException;
-import org.apache.geode.cache.query.TypeMismatchException;
+import org.apache.geode.cache.query.*;
+import org.apache.geode.cache.query.internal.ResultsBag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
@@ -16,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Slf4j
@@ -117,17 +116,38 @@ public class FunctionValidationServiceImpl implements ValidationService {
   }
 
   @Override
-  public void checkDataMatchers(ClientCache clientCache, Pool site1, Pool site2, Region<String, ValidationSummary> validationSummaryRegion, String region) throws NameResolutionException, TypeMismatchException, QueryInvocationTargetException, FunctionDomainException {
+  public void checkDataMatchers(ClientCache clientCache, Pool site1, Pool site2, Region<String,
+          ValidationSummary> validationSummaryRegion, String region) {
     ValidationSummary validationSummary = validationSummaryRegion.get(region);
     if (validationSummary == null) {
       validationSummary = new ValidationSummary().builder().regionName(region).build();
     }
-
     List<Boolean> checks = new ArrayList<>();
+    Map<Object, Object> result = functionService.executeFunction(region, site1, clientCache);
+    Region site2Region = cacheService.createRegion(clientCache, site2, region);
 
-    //TODO: Execute FunctionService to gather data from site1 and compare w/ site 2
-    functionService.executeFunction(region, site1, clientCache);
+    result.forEach((k, v) -> {
+      //Had to do it this way otherwise region.get() was not respecting pool.
+      //TODO figure out better solution than OQL
+      try {
+        String queryString = "Select e.value from /" + region + ".entrySet e where e.key='" + k +
+                "'";
+        ResultsBag p = (ResultsBag) clientCache
+                .getQueryService(site2.getName())
+                .newQuery(queryString)
+                .execute();
+        Object o = p.iterator().next();
 
+        if (v.equals(o)) {
+          checks.add(true);
+        } else {
+          checks.add(false);
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+        checks.add(false);
+      }
+    });
     if (checks.contains(false)) {
       log.error("checkDataMatchers: dataMatcher not equal region[{}]", region);
       validationSummary.setDataMatcher(false);
@@ -135,7 +155,7 @@ public class FunctionValidationServiceImpl implements ValidationService {
       log.info("checkDataMatchers: Validated dataMatcher region[{}]", region);
       validationSummary.setDataMatcher(true);
     }
-
     validationSummaryRegion.put(region, validationSummary);
+    cacheService.destroyRegion(clientCache, site2Region);
   }
 }

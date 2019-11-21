@@ -4,9 +4,11 @@ import org.apache.geode.cache.client.ClientCache;
 import org.apache.geode.cache.client.Pool;
 import org.springframework.beans.factory.annotation.Qualifier;
 
+import java.util.Map;
+
 public interface FunctionService {
 
-  void executeFunction(String regionName,
-                       @Qualifier("site1") Pool site1,
-                       ClientCache clientCache);
+  Map<Object, Object> executeFunction(String regionName,
+                                      @Qualifier("site1") Pool site1,
+                                      ClientCache clientCache);
 }

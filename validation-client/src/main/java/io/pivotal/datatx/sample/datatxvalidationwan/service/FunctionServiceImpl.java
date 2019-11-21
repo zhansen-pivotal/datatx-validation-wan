@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.gemfire.function.execution.GemfireOnRegionFunctionTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -21,10 +22,10 @@ public class FunctionServiceImpl implements FunctionService {
   CacheService cacheService;
 
   @Override
-  public void executeFunction(String regionName,
-                              @Qualifier("site1") Pool site1,
-                              ClientCache clientCache) {
-
+  public Map<Object, Object> executeFunction(String regionName,
+                                             @Qualifier("site1") Pool site1,
+                                             ClientCache clientCache) {
+    Map<Object, Object> dataFromGF = new HashMap<>();
     log.debug("Creating Client Region [{}] for function execution", regionName);
     Region region = cacheService.createRegion(clientCache, site1, regionName);
     Set keys = region.keySetOnServer();
@@ -37,11 +38,15 @@ public class FunctionServiceImpl implements FunctionService {
       //TODO: Handle validation as results come in. Probably need a custom ResultCollector
       result.forEach(q -> {
         if (q != null) {
-          log.info("From execute:  FunctionResult: {}", q);
+          dataFromGF.putAll(q);
+          // log.info("From execute:  FunctionResult: {}", q);
           counter.getAndIncrement(); //TODO: Remove. Only here for testing lastResult logic.
         }
       });
-      log.info("Result Set size for region[{}] is [{}]", regionName, counter);
+      log.debug("FunctionServiceImpl.executeFunction: Result Set size for region[{}] is [{}]",
+              regionName, counter);
     }
+    cacheService.destroyRegion(clientCache, region);
+    return dataFromGF;
   }
 }
